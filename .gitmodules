@@ -1,0 +1,3 @@
+[submodule "micropython-configurator"]
+	path = micropython-configurator
+	url = git@github.com:benvonhandorf/micropython-configurator.git
