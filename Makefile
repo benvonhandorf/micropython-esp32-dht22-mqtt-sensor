@@ -1,4 +1,6 @@
+PORT=/dev/tty.SLAB_USBtoUART
+
 upload:
-	ampy --port /dev/ttyUSB0 put micropython-configurator/configurator.py 
-	ampy --port /dev/ttyUSB0 put ../shared-config/config.json 
-	ampy --port /dev/ttyUSB0 put main.py
+	ampy --port $(PORT) --baud 115200 put micropython-configurator/configurator.py 
+	ampy --port $(PORT) --baud 115200 put config.json 
+	ampy --port $(PORT) --baud 115200 put main.py

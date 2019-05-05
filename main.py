@@ -1,12 +1,12 @@
 import configurator
-import status_light
 import machine
 import time
 import os
+import dht
+from machine import Timer
+from umqtt.simple import MQTTClient
 
 configurator = configurator.Configurator()
-
-brightnessReduction = configurator["brightnessReduction"] or 0
 
 class EnvironmentSensor:
   def __init__(self):
@@ -14,19 +14,25 @@ class EnvironmentSensor:
 
   def setup(self, server, user, password, topic):
     self.baseTopic = topic
+    self.temperatureTopic = "{0}/temperature".format(self.baseTopic)
+    self.humidityTopic = "{0}/humidity".format(self.baseTopic)
+
+    print(self.temperatureTopic)
+    print(self.humidityTopic)
 
     self.mqtt_client = MQTTClient("env_0", server, user=user, password=password)
-    self.mqtt_client.set_callback(self.topic_update)
     print("Last will topic: " "{0}/connected".format(self.baseTopic))
     self.mqtt_client.set_last_will(bytes("{0}/connected".format(self.baseTopic), 'utf-8'), b"0")
     self.mqtt_client.connect()
     self.mqtt_client.publish(bytes("{0}/connected".format(self.baseTopic), 'utf-8'), b"1")
 
-    self.updateTimer = Timer(-1)
+    self.readingTimer = Timer(-1)
+
+    self.update()
 
     self.readingTimer.init(period=30000, mode=Timer.PERIODIC, callback=self.timerCallback)
 
-  def timerCallback(self):
+  def timerCallback(self, timer):
     self.update()
 
   def update(self):
@@ -35,8 +41,10 @@ class EnvironmentSensor:
     temp = self.sensor.temperature()
     humidity = self.sensor.humidity()
 
-    self.mqtt_client.publish(bytes("{0}/temperature".format(self.baseTopic), 'utf-8'), bytes("{0}", temp))
-    self.mqtt_client.publish(bytes("{0}/humidity".format(self.baseTopic), 'utf-8'), bytes("{0}", humidity))
+    print("Temperature: {0} Humidity: {1}".format(temp, humidity))
+
+    self.mqtt_client.publish(bytes(self.temperatureTopic, 'utf-8'), bytes("{0}".format(temp), 'utf-8'))
+    self.mqtt_client.publish(bytes(self.humidityTopic, 'utf-8'), bytes("{0}".format(humidity), 'utf-8'))
 
   def main(self):
 
